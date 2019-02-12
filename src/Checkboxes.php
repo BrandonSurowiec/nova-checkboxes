@@ -61,20 +61,17 @@ class Checkboxes extends Field
 
         if ($value instanceof Collection) {
             $value = $value->toArray();
+        } elseif (is_string($value)) {
+            $value = explode(',', $value);
+        } elseif (! $value) {
+            $value = [];
         }
 
-        if (! $value) {
-            return json_encode($this->withUnchecked([]));
+        if (is_array($value) && $this->arrayIsAssoc($value)) {
+            $value = $this->onlyChecked($value);
         }
 
-        if (is_array($value)) {
-            if ($this->arrayIsAssoc($value)) {
-				$value = $this->onlyChecked($value);
-            }
-            return json_encode($this->withUnchecked($value));
-        }
-
-        return json_encode($this->withUnchecked(explode(',', $value)));
+        return json_encode($this->withUnchecked($value));
     }
 
     protected function fillAttributeFromRequest(
@@ -106,7 +103,7 @@ class Checkboxes extends Field
         );
     }
 
-	protected function shouldSaveUnchecked()
+    protected function shouldSaveUnchecked()
     {
         return (
             array_key_exists('save_unchecked', $this->meta)
@@ -114,7 +111,7 @@ class Checkboxes extends Field
         );
     }
 
-	protected function withUnchecked($data)
+    protected function withUnchecked($data)
     {
         return collect($this->meta['options'])
             ->mapWithKeys(function ($option) use ($data) {
@@ -125,20 +122,15 @@ class Checkboxes extends Field
             ->all();
     }
 
-	protected function onlyChecked($data)
+    protected function onlyChecked($data)
     {
         return collect($data)
-            ->filter(function ($isChecked) {
-                return $isChecked;
-            })
-            ->map(function ($value, $key) {
-                return $key;
-            })
-            ->values()
+            ->filter()
+            ->keys()
             ->all();
     }
 
-	protected function arrayIsAssoc(array $array)
+    protected function arrayIsAssoc(array $array)
     {
         if ([] === $array) {
             return false;
